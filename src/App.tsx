@@ -44,6 +44,7 @@ const createExpenseFormDefaults = (): ExpenseFormValues => ({
 function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
   const participantCounterRef = useRef(1);
   const expenseCounterRef = useRef(1);
 
@@ -481,10 +482,21 @@ function App() {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold">精算サマリー</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">明細</h2>
+          {participants.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="rounded border border-primary px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary/5"
+            >
+              {showDetails ? '明細を隠す' : '明細を表示'}
+            </button>
+          )}
+        </div>
         {participants.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">参加者を追加すると精算結果が表示されます。</p>
-        ) : (
+        ) : showDetails ? (
           <div className="mt-4">
             <div className="hidden overflow-x-auto md:block">
               <table className="min-w-full text-left text-sm">
@@ -535,6 +547,8 @@ function App() {
               })}
             </ul>
           </div>
+        ) : (
+          <p className="mt-4 text-sm text-slate-500">「明細を表示」を押すと精算結果が確認できます。</p>
         )}
       </section>
 
