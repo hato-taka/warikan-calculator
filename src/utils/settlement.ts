@@ -7,17 +7,6 @@ export type CalculatedBalance = {
   diff: number;
 };
 
-export type RoundedBalance = CalculatedBalance & {
-  roundedDiff: number;
-};
-
-const ROUNDING_UNIT = 100;
-
-const roundToUnit = (value: number, unit = ROUNDING_UNIT) => {
-  if (!Number.isFinite(value)) return 0;
-  return Math.round(value / unit) * unit;
-};
-
 export const calculateBalances = (
   participants: Participant[],
   expenses: Expense[]
@@ -55,43 +44,15 @@ export const calculateBalances = (
   });
 };
 
-export const roundBalancesToUnit = (
-  balances: CalculatedBalance[],
-  unit = ROUNDING_UNIT
-): RoundedBalance[] => {
-  const rounded = balances.map((balance) => ({
-    ...balance,
-    roundedDiff: roundToUnit(balance.diff, unit)
-  }));
-
-  const totalRounded = rounded.reduce((sum, balance) => sum + balance.roundedDiff, 0);
-
-  if (totalRounded !== 0 && rounded.length > 0) {
-    if (totalRounded > 0) {
-      const target = rounded.reduce((max, balance) =>
-        balance.roundedDiff > max.roundedDiff ? balance : max
-      );
-      target.roundedDiff -= totalRounded;
-    } else {
-      const target = rounded.reduce((min, balance) =>
-        balance.roundedDiff < min.roundedDiff ? balance : min
-      );
-      target.roundedDiff -= totalRounded;
-    }
-  }
-
-  return rounded;
-};
-
-export const buildSettlementPlan = (balances: RoundedBalance[]): SettlementEntry[] => {
+export const buildSettlementPlan = (balances: CalculatedBalance[]): SettlementEntry[] => {
   const debtors: { id: string; amount: number }[] = [];
   const creditors: { id: string; amount: number }[] = [];
 
   balances.forEach((balance) => {
-    if (balance.roundedDiff > 0) {
-      creditors.push({ id: balance.participant.id, amount: balance.roundedDiff });
-    } else if (balance.roundedDiff < 0) {
-      debtors.push({ id: balance.participant.id, amount: Math.abs(balance.roundedDiff) });
+    if (balance.diff > 0) {
+      creditors.push({ id: balance.participant.id, amount: balance.diff });
+    } else if (balance.diff < 0) {
+      debtors.push({ id: balance.participant.id, amount: Math.abs(balance.diff) });
     }
   });
 
@@ -121,5 +82,3 @@ export const buildSettlementPlan = (balances: RoundedBalance[]): SettlementEntry
 
   return settlements;
 };
-
-export const roundingUnit = ROUNDING_UNIT;

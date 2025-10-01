@@ -1,12 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import type { Expense, Participant } from './types';
-import {
-  buildSettlementPlan,
-  calculateBalances,
-  roundBalancesToUnit,
-  roundingUnit
-} from './utils/settlement';
+import { buildSettlementPlan, calculateBalances } from './utils/settlement';
 
 const formatter = new Intl.NumberFormat('ja-JP', {
   style: 'currency',
@@ -252,14 +247,9 @@ function App() {
     [participants, expenses]
   );
 
-  const roundedBalances = useMemo(
-    () => roundBalancesToUnit(balances, roundingUnit),
-    [balances]
-  );
-
   const settlements = useMemo(
-    () => buildSettlementPlan(roundedBalances),
-    [roundedBalances]
+    () => buildSettlementPlan(balances),
+    [balances]
   );
 
   const findParticipantName = (id: string) => participants.find((p) => p.id === id)?.name ?? '不明';
@@ -269,7 +259,7 @@ function App() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold text-primary">割り勘計算アプリ（MVP）</h1>
         <p className="text-sm text-slate-600">
-          参加者を追加し、支出を登録すると精算結果が自動で計算されます。精算金額は100円単位で四捨五入されています。
+          参加者を追加し、支出を登録すると精算結果が自動で計算されます。精算結果は1円単位で表示されます。
         </p>
       </header>
 
@@ -504,12 +494,10 @@ function App() {
                     <th className="py-2">立替額</th>
                     <th className="py-2">負担額</th>
                     <th className="py-2">差額</th>
-                    <th className="py-2">差額 (100円単位)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {roundedBalances.map((balance) => {
-                    const roundedMatch = balance.roundedDiff;
+                  {balances.map((balance) => {
                     return (
                       <tr key={balance.participant.id} className="border-b last:border-none">
                         <td className="py-2 font-medium">{balance.participant.name}</td>
@@ -518,9 +506,6 @@ function App() {
                         <td className={`py-2 ${balance.diff >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
                           {formatter.format(balance.diff)}
                         </td>
-                        <td className={`py-2 ${roundedMatch >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
-                          {formatter.format(roundedMatch)}
-                        </td>
                       </tr>
                     );
                   })}
@@ -528,8 +513,7 @@ function App() {
               </table>
             </div>
             <ul className="space-y-3 md:hidden">
-              {roundedBalances.map((balance) => {
-                const roundedMatch = balance.roundedDiff;
+              {balances.map((balance) => {
                 return (
                   <li
                     key={balance.participant.id}
@@ -544,10 +528,6 @@ function App() {
                       <span>差額</span>
                       <span className={`text-right font-semibold ${balance.diff >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
                         {formatter.format(balance.diff)}
-                      </span>
-                      <span>差額 (100円)</span>
-                      <span className={`text-right font-semibold ${roundedMatch >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
-                        {formatter.format(roundedMatch)}
                       </span>
                     </div>
                   </li>
@@ -572,9 +552,6 @@ function App() {
             ))}
           </ul>
         )}
-        <p className="mt-4 text-xs text-slate-500">
-          表示金額は100円単位に四捨五入されているため、実支払額と誤差が出る場合があります。
-        </p>
       </section>
     </div>
   );
